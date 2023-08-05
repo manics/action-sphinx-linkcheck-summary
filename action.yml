@@ -1,0 +1,66 @@
+# Reference: https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions
+#
+# yamllint disable rule:line-length
+---
+name: Sphinx linkcheck and summary
+description: |
+  Run the Sphinx linkchecker and summarise the results.
+
+branding:
+  icon: server
+  color: orange
+
+inputs:
+  docs-dir:
+    description: The directory containing the Sphinx documentation.
+    required: true
+    default: docs
+  build-dir:
+    description: The directory containing the built documentation.
+    required: true
+    default: docs/_build
+  sphinx-options:
+    description: Sphinx linkchecker options.
+    required: true
+    default: "--color -W --keep-going"
+  no-error:
+    description: Ignore errors in linkcheck
+    required: true
+    default: false
+
+outputs:
+  broken-links-count:
+    description: The number of broken links found.
+    value: ${{ steps.summarise.outputs.broken-links-count }}
+
+  permanent-redirects-count:
+    description: The number of permanent redirects found.
+    value: ${{ steps.summarise.outputs.permanent-redirects-count }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Sphinx linkcheck
+      id: linkcheck
+      # Ignore errors from linkcheck, as we want to summarise the results
+      run: |
+        echo "::group::linkcheck"
+        rc=0
+        make linkcheck SPHINXOPTS='${{ inputs.sphinx-options }}' || rc=$?
+        echo "linkcheck-exit-code=$rc" >> "$GITHUB_OUTPUT"
+        echo "::endgroup::"
+      shell: bash
+      working-directory: ${{ inputs.docs-dir }}
+
+    - name: Summarise linkcheck issues
+      id: summarise
+      run: |
+        ./summarise-linkcheck-output.bash ${{ inputs.build-dir }}/linkcheck/output.json ${{ inputs.no-error }}
+      shell: bash
+
+    # Just in case the linkcheck step fails for non-link reasons and the summary script
+    # didn't notice
+    - name: Check linkcheck code
+      if: "! inputs.no-error"
+      run: exit ${{ steps.summarise.outputs.linkcheck-exit-code }}
+      shell: bash
