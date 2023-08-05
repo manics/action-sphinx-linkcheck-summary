@@ -1,0 +1,40 @@
+# Runs tests referencing the local GitHub Action to verify it works as intended.
+---
+name: Test
+
+on:
+  pull_request:
+  push:
+    branches-ignore:
+      - "dependabot/**"
+      - "pre-commit-ci-update-config"
+    tags: ["**"]
+  workflow_dispatch:
+
+jobs:
+  test_linkcheck:
+    runs-on: ubuntu-22.04
+    name: Test linkchecker and summariser
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Local action
+        id: linkcheck
+        uses: ./
+        with:
+          docs-dir: tests/docs
+          build-dir: tests/docs/_build
+          error-on-broken-links: false
+
+      - name: Verify outputs
+        run: |
+          EXIT=0
+          if [[ "${{ steps.linkcheck.outputs.broken-link-count }}" != 1 ]]; then
+              echo "Expected broken-link-count=1"
+              EXIT=1
+          fi
+          if [[ "${{ steps.linkcheck.outputs.permanent-redirects-count }}" != 0 ]]; then
+              echo "Expected permanent-redirects-count=0"
+              EXIT=1
+          fi
+          exit $EXIT

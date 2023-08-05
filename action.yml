@@ -1,0 +1,53 @@
+# Reference: https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions
+#
+# yamllint disable rule:line-length
+---
+name: Sphinx linkcheck and summary
+description: |
+  Run the Sphinx linkchecker and summarise the results.
+
+branding:
+  icon: server
+  color: orange
+
+inputs:
+  docs-dir:
+    description: The directory containing the Sphinx documentation.
+    required: true
+    default: docs
+  build-dir:
+    description: The directory containing the built documentation.
+    required: true
+    default: docs/_build
+  sphinx-options:
+    description: Sphinx linkchecker options.
+    required: true
+    default: "--color -W --keep-going"
+  error-on-broken-links:
+    description: Fail if broken links are found.
+    required: true
+    default: true
+
+outputs:
+  broken-links-count:
+    description: The number of broken links found.
+    value: ${{ steps.summarise.outputs.broken-links-count }}
+
+  permanent-redirects-count:
+    description: The number of permanent redirects found.
+    value: ${{ steps.summarise.outputs.permanent-redirects-count }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Sphinx linkcheck
+      run: |
+        cd ${{ inputs.docs-dir }}
+        make linkcheck SPHINXOPTS='${{ inputs.sphinx-options }}'
+      shell: bash
+
+    - name: summarise linkcheck issues
+      id: summarise
+      if: always()
+      run: ./summarise-linkcheck-output.bash ${{ inputs.build-dir }}/linkcheck/output.json
+      shell: bash
