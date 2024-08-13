@@ -1,1 +1,1 @@
-Sphinx>=7,<8
+Sphinx>=6
