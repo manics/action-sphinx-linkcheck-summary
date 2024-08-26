@@ -55,7 +55,7 @@ runs:
     - name: Summarise linkcheck issues
       id: summarise
       run: |
-        ./summarise-linkcheck-output.bash "${{ inputs.build-dir }}/linkcheck/output.json" "${{ inputs.no-error }}"
+        ${{ github.action_path }}/summarise-linkcheck-output.bash "${{ inputs.build-dir }}/linkcheck/output.json" "${{ inputs.no-error }}"
       shell: bash
 
     # Just in case the linkcheck step fails for non-link reasons and the summary script
