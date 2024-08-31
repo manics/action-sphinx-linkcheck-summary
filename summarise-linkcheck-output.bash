@@ -18,6 +18,8 @@ N_PERMANENT_REDIRECT=$(jq -r 'select(.status=="redirected")' "$LINKCHECK" | jq -
 if [[ $N_BROKEN -gt 0 ]]; then
     printf "\n\033[31;1m%s\033[0m\n" "Broken links"
     jq -r 'select(.status=="broken") | "\(.filename):\(.lineno) \(.uri)\n    \(.info)"' "$LINKCHECK"
+    # Annotate files with broken links
+    jq -r 'select(.status=="broken") | "::error file=\(.filename),line=\(.lineno),title=Broken link::\(.info)"' "$LINKCHECK">> "$GITHUB_OUTPUT"
 fi
 
 if [[ $N_PERMANENT_REDIRECT -gt 0 ]]; then
