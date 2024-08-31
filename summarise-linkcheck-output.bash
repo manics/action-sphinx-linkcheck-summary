@@ -5,11 +5,16 @@
 set -eu
 
 LINKCHECK="$1"
-NO_ERROR=${2:-false}
+DOCS_DIR="${2:-}"
+NO_ERROR=${3:-false}
 
 # Support running locally outside GitHub
 if [[ ${CI:-} != "true" ]]; then
     GITHUB_OUTPUT="${GITHUB_OUTPUT:-/dev/null}"
+fi
+
+if [[ -n $DOCS_DIR ]]; then
+    DOCS_DIR="${DOCS_DIR%/}/"
 fi
 
 N_BROKEN=$(jq -r 'select(.status=="broken")' "$LINKCHECK" | jq -s length)
@@ -19,7 +24,7 @@ if [[ $N_BROKEN -gt 0 ]]; then
     printf "\n\033[31;1m%s\033[0m\n" "Broken links"
     jq -r 'select(.status=="broken") | "\(.filename):\(.lineno) \(.uri)\n    \(.info)"' "$LINKCHECK"
     # Annotate files with broken links
-    jq -r 'select(.status=="broken") | "::error file=\(.filename),line=\(.lineno),title=Broken link::\(.info)"' "$LINKCHECK">> "$GITHUB_OUTPUT"
+    jq -r --arg DOCS_DIR "$DOCS_DIR" 'select(.status=="broken") | "::error file=\($DOCS_DIR)\(.filename),line=\(.lineno),title=Broken link::\(.info)"' "$LINKCHECK">> "$GITHUB_OUTPUT"
 fi
 
 if [[ $N_PERMANENT_REDIRECT -gt 0 ]]; then
