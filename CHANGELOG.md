@@ -1,1 +1,3 @@
-# v0.1.0 - 2023-xx-yy
+# v1.0.0 - 2026-03-29
+
+First proper release!
