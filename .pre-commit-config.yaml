@@ -28,3 +28,13 @@ repos:
     rev: v0.1.30
     hooks:
       - id: shellcheck
+
+  # Static security analysis of GitHub actions https://github.com/woodruffw/zizmor
+  # Additional config is in .github/zizmor.yml
+  - repo: https://github.com/woodruffw/zizmor-pre-commit
+    rev: v1.23.1
+    hooks:
+      - id: zizmor
+        args:
+          - --fix=safe
+          # - --fix=all

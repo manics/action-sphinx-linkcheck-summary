@@ -46,21 +46,28 @@ runs:
       run: |
         echo "::group::linkcheck"
         rc=0
-        make linkcheck SPHINXOPTS='${{ inputs.sphinx-options }}' || rc=$?
+        make linkcheck SPHINXOPTS="${INPUTS_SPHINX_OPTIONS}" || rc=$?
         echo "linkcheck-exit-code=$rc" >> "$GITHUB_OUTPUT"
         echo "::endgroup::"
       shell: bash
       working-directory: ${{ inputs.docs-dir }}
+      env:
+        INPUTS_SPHINX_OPTIONS: ${{ inputs.sphinx-options }}
 
     - name: Summarise linkcheck issues
       id: summarise
       run: |
-        ${{ github.action_path }}/summarise-linkcheck-output.bash "${{ inputs.build-dir }}/linkcheck/output.json" "${{ inputs.no-error }}"
+        ${{ github.action_path }}/summarise-linkcheck-output.bash "${INPUTS_BUILD_DIR}/linkcheck/output.json" "${INPUTS_NO_ERROR}"
       shell: bash
+      env:
+        INPUTS_BUILD_DIR: ${{ inputs.build-dir }}
+        INPUTS_NO_ERROR: ${{ inputs.no-error }}
 
     # Just in case the linkcheck step fails for non-link reasons and the summary script
     # didn't notice
     - name: Check linkcheck code
       if: "! inputs.no-error"
-      run: exit ${{ steps.summarise.outputs.linkcheck-exit-code }}
+      run: exit ${STEPS_SUMMARISE_OUTPUTS_LINKCHECK_EXIT_CODE}
       shell: bash
+      env:
+        STEPS_SUMMARISE_OUTPUTS_LINKCHECK_EXIT_CODE: ${{ steps.summarise.outputs.linkcheck-exit-code }}
